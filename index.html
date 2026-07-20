@@ -6,12 +6,26 @@
 
 <style>
 body {
+    margin: 0;
     font-family: Arial;
-    text-align: center;
-    background: linear-gradient(135deg, #e0f7fa, #fce4ec);
+    background: linear-gradient(135deg,#0f2027,#2c5364);
+    color: white;
 }
 
-/* زر مخفي */
+h1 {
+    text-align: center;
+    padding: 15px;
+}
+
+#searchBox {
+    width: 90%;
+    margin: 10px auto;
+    display: block;
+    padding: 12px;
+    border-radius: 30px;
+    border: none;
+}
+
 #secretBtn {
     position: fixed;
     top: 0;
@@ -21,100 +35,93 @@ body {
     opacity: 0;
 }
 
-/* لوحات */
 .panel {
     display: none;
     background: white;
-    padding: 20px;
-    margin: 20px;
+    color: black;
+    margin: 10px;
+    padding: 15px;
     border-radius: 15px;
 }
 
-/* البحث */
-#searchBox {
-    padding: 12px;
-    width: 85%;
-    max-width: 400px;
-    border-radius: 30px;
-    border: none;
-    margin: 15px;
-}
-
-/* inputs */
-input {
-    padding: 10px;
-    margin: 5px;
-    border-radius: 8px;
-    border: none;
-}
-
-/* المنتجات */
 #products {
     display: grid;
     grid-template-columns: repeat(2,1fr);
-    gap: 10px;
+    gap: 12px;
     padding: 10px;
 }
 
-/* كارت */
 .product {
-    background: white;
-    padding: 10px;
-    border-radius: 10px;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 260px;
-}
-
-/* تثبيت العنوان */
-.product h4 {
-    height: 60px;
+    background: #1f3b4d;
+    border-radius: 20px;
     overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
-/* الصورة */
-.image-box {
+.product img {
     width: 100%;
-    height: 90px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.image-box img {
-    max-width: 100%;
-    max-height: 100%;
+    height: 180px;
     object-fit: contain;
+    background: #fff;
+    padding: 5px;
+    cursor: pointer;
 }
 
-/* الأزرار */
-.buttons {
-    display: flex;
-    gap: 5px;
-    margin-top: auto;
+.product-info {
+    padding: 10px;
 }
 
+.product-info h4 {
+    height: 45px;
+    overflow-y: auto;
+    font-size: 14px;
+}
+
+/* زر Buy Now أحمر */
 .buy {
-    flex: 1;
-    background: red;
+    width: 100%;
+    background: #ff3b3b;
     color: white;
     padding: 10px;
-    border-radius: 8px;
     border: none;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+/* تأثير hover */
+.buy:hover {
+    background: #cc0000;
 }
 
 .deleteBtn {
-    flex: 1;
+    width: 100%;
     background: black;
     color: white;
     padding: 10px;
-    border-radius: 8px;
+    border-radius: 10px;
     border: none;
+    margin-top: 5px;
+}
+
+/* نافذة تكبير الصورة */
+#imageModal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    justify-content: center;
+    align-items: center;
+}
+
+/* الصورة الكبيرة */
+#modalImg {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 15px;
 }
 </style>
 </head>
@@ -123,33 +130,35 @@ input {
 
 <h1>🛒 Deenify</h1>
 
-<!-- 🔍 البحث -->
-<input id="searchBox" placeholder="🔍 Chercher / Search..." onkeyup="searchProducts()">
+<input id="searchBox" placeholder="🔍 Search..." onkeyup="searchProducts()">
 
 <button id="secretBtn" onclick="openAdmin()"></button>
 
-<!-- 🔐 LOGIN -->
+<!-- LOGIN -->
 <div id="loginPanel" class="panel">
-    <h3>🔐 Admin Login</h3>
-    <input id="email" placeholder="Email"><br>
-    <input id="password" type="password" placeholder="Password"><br>
-    <button onclick="login()">Login</button>
+<h3>Admin Login</h3>
+<input id="email" placeholder="Email"><br>
+<input id="password" type="password" placeholder="Password"><br>
+<button onclick="login()">Login</button>
 </div>
 
-<!-- 🛠️ ADMIN -->
+<!-- ADMIN -->
 <div id="adminPanel" class="panel">
-    <h3>Add Product</h3>
-    <input id="name" placeholder="Name"><br>
-    <input id="image" placeholder="Image URL"><br>
-    <input id="link" placeholder="Link"><br>
-    <button onclick="addProduct()">Add</button>
-
-    <br><br>
-    <button onclick="logout()">Logout</button>
+<h3>Add Product</h3>
+<input id="name" placeholder="Name"><br>
+<input id="image" placeholder="Image URL"><br>
+<input id="link" placeholder="Link"><br>
+<button onclick="addProduct()">Add</button>
+<br><br>
+<button onclick="logout()">Logout</button>
 </div>
 
-<!-- 🛒 المنتجات -->
 <div id="products"></div>
+
+<!-- تكبير الصورة -->
+<div id="imageModal" onclick="closeImage()">
+    <img id="modalImg">
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -163,12 +172,29 @@ let tap = 0;
 let isAdmin = false;
 let allProducts = [];
 
-// فتح login
+// منتجات فورية
+const fastProducts = [
+{ name:"🔥 Hot Product", image:"https://i.imgur.com/8Km9tLL.jpg", link:"#"},
+{ name:"⭐ Best Seller", image:"https://i.imgur.com/QlRphfQ.jpg", link:"#"}
+];
+
+// فتح admin
 function openAdmin(){
     tap++;
     if(tap >= 5){
         tap = 0;
-        document.getElementById("loginPanel").style.display = "block";
+
+        let login = document.getElementById("loginPanel");
+        let admin = document.getElementById("adminPanel");
+
+        if(login.style.display === "block" || admin.style.display === "block"){
+            login.style.display = "none";
+            admin.style.display = "none";
+        }else{
+            login.style.display = "block";
+        }
+
+        loadProducts();
     }
 }
 
@@ -177,10 +203,12 @@ async function login(){
     let email = document.getElementById("email").value;
     let password = document.getElementById("password").value;
 
+    if(!email || !password) return;
+
     const { error } = await client.auth.signInWithPassword({ email, password });
 
     if(error){
-        alert(error.message);
+        alert("Login error");
         return;
     }
 
@@ -200,36 +228,52 @@ async function logout(){
     loadProducts();
 }
 
-// تحميل المنتجات
-async function loadProducts(){
-    const { data } = await client.from("products").select("*");
-    allProducts = data || [];
-    displayProducts(allProducts);
+// تحويل صورة AliExpress إلى HD
+function getHDImage(url){
+    if(!url) return "";
+    return url.replace(/_\d+x\d+\.jpg/, ".jpg");
 }
 
-// عرض
+// فتح الصورة
+function openImage(src){
+    document.getElementById("modalImg").src = src;
+    document.getElementById("imageModal").style.display = "flex";
+}
+
+// غلق الصورة
+function closeImage(){
+    document.getElementById("imageModal").style.display = "none";
+}
+
+// عرض المنتجات
 function displayProducts(products){
     let html = "";
+
+    let adminVisible = document.getElementById("adminPanel").style.display === "block";
 
     products.forEach(p=>{
         html += `
         <div class="product">
-            <h4>${p.name}</h4>
+            <img src="${getHDImage(p.image)}" loading="lazy" 
+                 onclick="openImage('${getHDImage(p.image)}')">
 
-            <div class="image-box">
-                <img src="${p.image}">
-            </div>
+            <div class="product-info">
+                <h4>${p.name}</h4>
 
-            <div class="buttons">
-                <button class="buy" onclick="
-                    let link='${p.link}';
-                    if(!link.startsWith('http')){
-                        link='https://' + link;
-                    }
-                    window.open(link)
-                ">Buy Now</button>
+   <button class="buy" onclick="
+let link='${p.link}';
+if(!link.startsWith('http')) link='https://' + link;
 
-                ${isAdmin ? `<button class="deleteBtn" onclick="deleteProduct('${p.id}')">Delete</button>` : ""}
+if (/TikTok/i.test(navigator.userAgent)) {
+    alert('If you are using TikTok, press ⋮ then choose Open in Browser before buying.');
+}
+
+window.open(link, '_blank');
+">Buy Now</button>
+
+                ${(isAdmin && adminVisible) 
+                ? `<button class="deleteBtn" onclick="deleteProduct('${p.id}')">Delete</button>` 
+                : ""}
             </div>
         </div>`;
     });
@@ -237,75 +281,63 @@ function displayProducts(products){
     document.getElementById("products").innerHTML = html;
 }
 
+// تحميل سريع
+function instantLoad(){
+    displayProducts(fastProducts);
+}
+
+// تحميل من Supabase
+async function loadProducts(){
+
+    let cached = localStorage.getItem("products");
+
+    if(cached){
+        allProducts = JSON.parse(cached);
+        displayProducts(allProducts);
+    }
+
+    const { data } = await client.from("products").select("*");
+
+    if(data){
+        allProducts = data;
+        displayProducts(allProducts);
+
+        localStorage.setItem("products", JSON.stringify(data));
+    }
+}
+
 // إضافة
 async function addProduct(){
-    if(!isAdmin){
-        alert("Login first");
-        return;
-    }
+    if(!isAdmin) return;
 
     let name = document.getElementById("name").value;
     let image = document.getElementById("image").value;
     let link = document.getElementById("link").value;
 
     await client.from("products").insert([{name, image, link}]);
+
     loadProducts();
 }
 
 // حذف
 async function deleteProduct(id){
-    if(!isAdmin) return;
-
-    if(!confirm("Delete product?")) return;
-
     await client.from("products").delete().eq("id", id);
     loadProducts();
 }
 
-// 🔍 normalize
-function normalize(text){
-    return text.toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[أإآ]/g, "ا")
-    .replace(/ة/g, "ه")
-    .replace(/ى/g, "ي")
-    .trim();
-}
-
-// 🧠 قاموس
-const dictionary = {
-    charger: ["chargeur", "شاحن"],
-    cable: ["cable", "كابل"],
-    phone: ["telephone", "téléphone", "هاتف"],
-};
-
-// 🔍 البحث
+// بحث
 function searchProducts(){
-    let value = normalize(document.getElementById("searchBox").value);
+    let value = document.getElementById("searchBox").value.toLowerCase();
 
-    let filtered = allProducts.filter(p => {
-        let name = normalize(p.name);
-
-        if(name.includes(value)) return true;
-
-        for(let key in dictionary){
-            let words = [key, ...dictionary[key]];
-
-            if(words.includes(value)){
-                if(words.some(w => name.includes(normalize(w)))){
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    });
+    let filtered = allProducts.filter(p =>
+        p.name.toLowerCase().includes(value)
+    );
 
     displayProducts(filtered);
 }
 
 // تشغيل
+instantLoad();
 loadProducts();
 </script>
 
